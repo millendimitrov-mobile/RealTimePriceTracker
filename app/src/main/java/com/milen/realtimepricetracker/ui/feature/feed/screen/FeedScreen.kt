@@ -1,16 +1,18 @@
 package com.milen.realtimepricetracker.ui.feature.feed.screen
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.milen.realtimepricetracker.ui.feature.feed.FeedIntent
 import com.milen.realtimepricetracker.ui.feature.feed.FeedViewModel
 
 @Composable
 internal fun FeedScreen(
     modifier: Modifier = Modifier,
-    viewModel: FeedViewModel = viewModel(),
+    viewModel: FeedViewModel = hiltViewModel<FeedViewModel>(),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -19,5 +21,9 @@ internal fun FeedScreen(
         state = state,
         onIntent = viewModel::handleIntent
     )
+
+    LaunchedEffect(Unit) {
+        viewModel.handleIntent(FeedIntent.StartFeed)
+    }
 }
 

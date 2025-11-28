@@ -3,5 +3,5 @@
     <string name="feed_title">Stock Prices</string>
     <string name="feed_start">Start</string>
     <string name="feed_stop">Stop</string>
-    <string name="feed_content_placeholder">Feed Content - Stateless</string>
+    <string name="feed_no_messages">No messages received yet.</string>
 </resources>

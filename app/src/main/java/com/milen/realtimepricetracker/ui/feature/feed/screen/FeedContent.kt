@@ -3,12 +3,16 @@ package com.milen.realtimepricetracker.ui.feature.feed.screen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.milen.realtimepricetracker.R
 import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.ui.annotations.ThemePreviews
@@ -33,17 +37,49 @@ internal fun FeedContent(
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.feed_content_placeholder),
-                style = MaterialTheme.typography.bodyLarge
-            )
+        if (state.rawMessages.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.feed_no_messages),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                items(
+                    items = state.rawMessages,
+                    key = { index -> index }
+                ) { message ->
+                    RawMessageItem(
+                        message = message,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun RawMessageItem(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -68,7 +104,12 @@ private fun FeedContentPreviewConnected() {
         FeedContent(
             state = FeedState(
                 connectionStatus = ConnectionStatus.CONNECTED,
-                isFeedRunning = true
+                isFeedRunning = true,
+                rawMessages = listOf(
+                    "Sample message 1",
+                    "Sample message 2",
+                    "Sample message 3"
+                )
             ),
             onIntent = {}
         )
