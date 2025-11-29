@@ -1,5 +1,6 @@
 package com.milen.realtimepricetracker.ui.feature.feed
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.milen.realtimepricetracker.BuildConfig
@@ -10,11 +11,14 @@ import com.milen.realtimepricetracker.domain.logger.Logger
 import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.domain.model.StockSymbol
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.json.Json
@@ -26,7 +30,27 @@ internal class FeedViewModel @Inject constructor(
     private val symbolMapper: SymbolMapper,
     private val json: Json,
     private val logger: Logger,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    private val shouldFeedRun = savedStateHandle.getStateFlow(KEY_IS_FEED_RUNNING, false)
+
+    private val autoSyncFeedJob: Job = combine(
+        shouldFeedRun,
+        webSocketRepository.connectionStatus
+    ) { shouldRun, status ->
+        Pair(shouldRun, status)
+    }.onEach { (shouldRun, status) ->
+        when {
+            shouldRun && status != ConnectionStatus.CONNECTED -> {
+                webSocketRepository.start()
+            }
+
+            !shouldRun && status == ConnectionStatus.CONNECTED -> {
+                webSocketRepository.stop()
+            }
+        }
+    }.launchIn(viewModelScope)
 
     private val isLoading = MutableStateFlow(false)
 
@@ -61,23 +85,19 @@ internal class FeedViewModel @Inject constructor(
     val state: StateFlow<FeedState> = combine(
         webSocketRepository.connectionStatus,
         isLoading,
-        stocks
-    ) { status, loading, stocksList ->
+        stocks,
+        shouldFeedRun
+    ) { status, loading, stocksList, shouldRun ->
         FeedState(
             connectionStatus = status,
-            isFeedRunning = status == ConnectionStatus.CONNECTED,
-            isLoading = loading,
+            isFeedRunning = shouldRun && status == ConnectionStatus.CONNECTED,
             stocks = stocksList
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = FeedState(isLoading = true)
+        initialValue = FeedState()
     )
-
-    companion object {
-        private const val TAG = "${BuildConfig.APPLICATION_ID}.FeedViewModel"
-    }
 
     fun handleIntent(intent: FeedIntent) {
         when (intent) {
@@ -88,20 +108,26 @@ internal class FeedViewModel @Inject constructor(
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        autoSyncFeedJob.cancel()
+    }
+
     private fun startFeed() {
-        webSocketRepository.start()
+        savedStateHandle[KEY_IS_FEED_RUNNING] = true
     }
 
     private fun stopFeed() {
-        webSocketRepository.stop()
+        savedStateHandle[KEY_IS_FEED_RUNNING] = false
     }
 
     private fun toggleFeed() {
-        val currentStatus = webSocketRepository.connectionStatus.value
-        if (currentStatus == ConnectionStatus.CONNECTED) {
-            stopFeed()
-        } else {
-            startFeed()
-        }
+        val currentShouldRun = shouldFeedRun.value
+        savedStateHandle[KEY_IS_FEED_RUNNING] = !currentShouldRun
+    }
+
+    companion object {
+        private const val TAG = "${BuildConfig.APPLICATION_ID}.FeedViewModel"
+        private const val KEY_IS_FEED_RUNNING = "is_feed_running"
     }
 }

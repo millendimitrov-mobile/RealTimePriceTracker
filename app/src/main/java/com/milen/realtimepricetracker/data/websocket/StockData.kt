@@ -13,8 +13,8 @@ internal object StockData {
         ),
         SymbolDto(
             id = "GOOG",
-            name = "Alphabet",
-            description = "Alphabet Inc. provides various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America.",
+            name = "Google",
+            description = "Google provides various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America.",
             price = BigDecimal("140.25")
         ),
         SymbolDto(
