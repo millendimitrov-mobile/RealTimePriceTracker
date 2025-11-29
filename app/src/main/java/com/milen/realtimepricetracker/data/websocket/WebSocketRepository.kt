@@ -4,6 +4,7 @@ import com.milen.realtimepricetracker.di.qualifiers.ApplicationScope
 import com.milen.realtimepricetracker.domain.logger.Logger
 import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,8 @@ internal class WebSocketRepository @Inject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) {
 
-    private var messageSubscriptionJob: kotlinx.coroutines.Job? = null
+    private var connectionStatusSubscriptionJob: Job? = null
+    private var messageSubscriptionJob: Job? = null
 
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.DISCONNECTED)
     val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus
@@ -33,13 +35,23 @@ internal class WebSocketRepository @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val rawMessages: SharedFlow<String> = _rawMessages
-
-    init {
-        observePriceFeedServiceConnection()
+    fun start() {
+        subscribeForFeeds()
     }
 
-    private fun observePriceFeedServiceConnection() {
-        priceFeedService.connectionStatus
+    fun stop() {
+        stopConnectionStatusSubscription()
+        stopMessageSubscription()
+        _connectionStatus.update { ConnectionStatus.DISCONNECTED }
+    }
+
+    private fun subscribeForFeeds() {
+        if (connectionStatusSubscriptionJob?.isActive == true) {
+            logger.logEvent("Connection status subscription already active", TAG)
+            return
+        }
+
+        connectionStatusSubscriptionJob = priceFeedService.connectionStatus
             .onEach { status ->
                 _connectionStatus.update { status }
                 when (status) {
@@ -48,14 +60,26 @@ internal class WebSocketRepository @Inject constructor(
                             startMessageSubscription()
                         }
                     }
+
                     ConnectionStatus.DISCONNECTED -> {
                         stopMessageSubscription()
                     }
-                    ConnectionStatus.CONNECTING -> {
-                    }
+
+                    ConnectionStatus.CONNECTING -> Unit
                 }
             }
             .launchIn(appScope)
+        logger.logEvent("Started connection status subscription", TAG)
+    }
+
+    private fun stopConnectionStatusSubscription() {
+        try {
+            connectionStatusSubscriptionJob?.cancel()
+            connectionStatusSubscriptionJob = null
+            logger.logEvent("Stopped connection status subscription", TAG)
+        } catch (e: Exception) {
+            logger.logError("Error stopping connection status subscription: ${e.message}", e, TAG)
+        }
     }
 
     private fun startMessageSubscription() {
@@ -81,14 +105,6 @@ internal class WebSocketRepository @Inject constructor(
         } catch (e: Exception) {
             logger.logError("Error stopping message subscription: ${e.message}", e, TAG)
         }
-    }
-
-    fun start() {
-        priceFeedService.start()
-    }
-
-    fun stop() {
-        priceFeedService.stop()
     }
 
     companion object {

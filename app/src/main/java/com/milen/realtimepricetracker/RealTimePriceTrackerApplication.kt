@@ -35,6 +35,6 @@ class RealTimePriceTrackerApplication : Application() {
     }
 
     companion object {
-        private const val TAG = "RealTimePriceTrackerApplication"
+        private const val TAG = "${BuildConfig.APPLICATION_ID}.RealTimePriceTrackerApplication"
     }
 }

@@ -23,7 +23,7 @@ import io.ktor.client.plugins.logging.Logger as KtorLogger
 @InstallIn(SingletonComponent::class)
 internal object NetworkModule {
 
-    private const val TAG = "HttpClient"
+    private const val TAG = "${BuildConfig.APPLICATION_ID}.HttpClient"
 
     @Provides
     @Singleton
