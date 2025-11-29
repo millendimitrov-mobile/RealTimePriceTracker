@@ -5,5 +5,7 @@ internal sealed interface FeedIntent {
     object StopFeed : FeedIntent
     object ToggleFeed : FeedIntent
     data class SymbolClicked(val symbol: String) : FeedIntent
+    object Retry : FeedIntent
+    object ClearError : FeedIntent
 }
 

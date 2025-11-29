@@ -7,5 +7,6 @@ internal data class FeedState(
     val connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED,
     val isFeedRunning: Boolean = false,
     val stocks: List<StockSymbol> = emptyList(),
+    val error: String? = null,
 )
 
