@@ -8,12 +8,16 @@ import com.milen.realtimepricetracker.data.mapper.SymbolMapper
 import com.milen.realtimepricetracker.data.network.model.SymbolDto
 import com.milen.realtimepricetracker.data.websocket.WebSocketRepository
 import com.milen.realtimepricetracker.domain.logger.Logger
+import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.domain.model.StockSymbol
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
@@ -25,7 +29,7 @@ internal class SymbolDetailsViewModel @Inject constructor(
     private val symbolMapper: SymbolMapper,
     private val json: Json,
     private val logger: Logger,
-    webSocketRepository: WebSocketRepository,
+    private val webSocketRepository: WebSocketRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -34,6 +38,15 @@ internal class SymbolDetailsViewModel @Inject constructor(
 
     private val _events = Channel<SymbolDetailsEvent>(Channel.RENDEZVOUS)
     val events = _events.receiveAsFlow()
+
+    private val ensureRepositoryRunningJob: Job = webSocketRepository.connectionStatus
+        .onEach { status ->
+            if (status != ConnectionStatus.CONNECTED) {
+                logger.logEvent("Repository not connected, starting it", TAG)
+                webSocketRepository.start()
+            }
+        }
+        .launchIn(viewModelScope)
 
     private val currentSymbol = webSocketRepository.rawMessages
         .map { rawJson ->
@@ -74,6 +87,11 @@ internal class SymbolDetailsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SymbolDetailsState(isLoading = true)
         )
+
+    override fun onCleared() {
+        super.onCleared()
+        ensureRepositoryRunningJob.cancel()
+    }
 
     fun handleIntent(intent: SymbolDetailsIntent) {
         when (intent) {

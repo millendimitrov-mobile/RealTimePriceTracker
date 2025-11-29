@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import com.milen.realtimepricetracker.ui.feature.details.screen.SymbolDetailsScreen
 import com.milen.realtimepricetracker.ui.feature.feed.screen.FeedScreen
 
@@ -32,9 +33,15 @@ internal fun NavGraph(
             FeedScreen(navController = navController)
         }
 
-        composable(route = Screen.SymbolDetails.ROUTE) {
+        composable(
+            route = Screen.SymbolDetails.ROUTE,
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "stocks://symbol/{symbol}"
+                }
+            )
+        ) {
             SymbolDetailsScreen(navController = navController)
         }
     }
 }
-
