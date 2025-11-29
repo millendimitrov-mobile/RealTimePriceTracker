@@ -11,4 +11,9 @@
     <string name="navigate_to_details">Navigate to details</string>
     <string name="symbol_details_title">Stock Details</string>
     <string name="back">Back</string>
+    <string name="error_connection_failed">Connection failed. Please try again.</string>
+    <string name="error_parsing_failed">Failed to parse data. Please try again.</string>
+    <string name="error_unknown">An error occurred. Please try again.</string>
+    <string name="retry">Retry</string>
+    <string name="close">Close</string>
 </resources>

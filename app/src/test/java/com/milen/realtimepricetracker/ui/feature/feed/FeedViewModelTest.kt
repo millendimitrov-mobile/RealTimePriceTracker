@@ -1,5 +1,6 @@
 package com.milen.realtimepricetracker.ui.feature.feed
 
+import android.content.Context
 import app.cash.turbine.test
 import com.milen.realtimepricetracker.data.mapper.SymbolMapper
 import com.milen.realtimepricetracker.data.network.model.SymbolDto
@@ -20,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,6 +35,7 @@ class FeedViewModelTest {
     private lateinit var json: Json
     private lateinit var logger: Logger
     private lateinit var savedStateHandle: androidx.lifecycle.SavedStateHandle
+    private lateinit var context: Context
     private lateinit var viewModel: FeedViewModel
 
     @Before
@@ -42,6 +45,7 @@ class FeedViewModelTest {
         json = Json { ignoreUnknownKeys = true }
         logger = mockk(relaxed = true)
         savedStateHandle = mockk(relaxed = true)
+        context = mockk(relaxed = true)
 
         every { savedStateHandle.getStateFlow<Boolean>(any(), any()) } returns MutableStateFlow(
             false
@@ -52,13 +56,16 @@ class FeedViewModelTest {
             extraBufferCapacity = 100,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
+        every { context.getString(com.milen.realtimepricetracker.R.string.error_connection_failed) } returns "Connection failed. Please try again."
+        every { context.getString(com.milen.realtimepricetracker.R.string.error_parsing_failed) } returns "Failed to parse data. Please try again."
 
         viewModel = FeedViewModel(
             webSocketRepository = webSocketRepository,
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
     }
 
@@ -69,6 +76,7 @@ class FeedViewModelTest {
             assertEquals(ConnectionStatus.DISCONNECTED, state.connectionStatus)
             assertFalse(state.isFeedRunning)
             assertTrue(state.stocks.isEmpty())
+            assertNull(state.error)
         }
     }
 
@@ -96,7 +104,8 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         viewModel.handleIntent(FeedIntent.ToggleFeed)
@@ -142,7 +151,8 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         val jsonString = json.encodeToString(dtos)
@@ -187,7 +197,8 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         val jsonString = json.encodeToString(dtos)
@@ -225,7 +236,8 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         viewModel.state.test {
@@ -252,7 +264,8 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         viewModel.state.test {
@@ -263,7 +276,7 @@ class FeedViewModelTest {
     }
 
     @Test
-    fun `handles invalid JSON gracefully`() = runTest(StandardTestDispatcher()) {
+    fun `handles invalid JSON gracefully and sets error`() = runTest(StandardTestDispatcher()) {
         val rawMessagesFlow = MutableSharedFlow<String>(
             replay = 1,
             extraBufferCapacity = 100,
@@ -276,18 +289,183 @@ class FeedViewModelTest {
             symbolMapper = symbolMapper,
             json = json,
             logger = logger,
-            savedStateHandle = savedStateHandle
+            savedStateHandle = savedStateHandle,
+            context = context
         )
 
         viewModel.state.test {
             val initialState = awaitItem()
             assertEquals(0, initialState.stocks.size)
+            assertNull(initialState.error)
 
             rawMessagesFlow.emit("invalid json")
             advanceUntilIdle()
 
+            val errorState = awaitItem()
+            assertEquals("Failed to parse data. Please try again.", errorState.error)
             verify(timeout = 2000) { logger.logError(any(), any(), any()) }
             cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `sets error when connection fails from CONNECTING to DISCONNECTED`() =
+        runTest(StandardTestDispatcher()) {
+            val shouldFeedRunFlow = MutableStateFlow(true)
+            val connectionStatusFlow =
+                MutableStateFlow<ConnectionStatus>(ConnectionStatus.DISCONNECTED)
+            every { savedStateHandle.getStateFlow<Boolean>(any(), any()) } returns shouldFeedRunFlow
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+            every { webSocketRepository.rawMessages } returns MutableSharedFlow<String>(
+                replay = 0,
+                extraBufferCapacity = 100,
+                onBufferOverflow = BufferOverflow.DROP_OLDEST
+            )
+
+            viewModel = FeedViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle,
+                context = context
+            )
+
+            viewModel.state.test {
+                skipItems(1)
+
+                connectionStatusFlow.value = ConnectionStatus.CONNECTING
+                advanceUntilIdle()
+                skipItems(1)
+
+                connectionStatusFlow.value = ConnectionStatus.DISCONNECTED
+                advanceUntilIdle()
+
+                var errorState = awaitItem()
+                while (errorState.error == null) {
+                    errorState = awaitItem()
+                }
+                assertEquals("Connection failed. Please try again.", errorState.error)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `clears error when connection succeeds`() = runTest(StandardTestDispatcher()) {
+        val connectionStatusFlow = MutableStateFlow<ConnectionStatus>(ConnectionStatus.DISCONNECTED)
+        every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+        every { webSocketRepository.rawMessages } returns MutableSharedFlow<String>(
+            replay = 0,
+            extraBufferCapacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        )
+
+        viewModel = FeedViewModel(
+            webSocketRepository = webSocketRepository,
+            symbolMapper = symbolMapper,
+            json = json,
+            logger = logger,
+            savedStateHandle = savedStateHandle,
+            context = context
+        )
+
+        viewModel.state.test {
+            skipItems(1)
+
+            connectionStatusFlow.value = ConnectionStatus.CONNECTED
+            advanceUntilIdle()
+
+            val connectedState = awaitItem()
+            assertNull(connectedState.error)
+        }
+    }
+
+    @Test
+    fun `handleIntent Retry clears error and restarts connection`() =
+        runTest(StandardTestDispatcher()) {
+            val shouldFeedRunFlow = MutableStateFlow(true)
+            val connectionStatusFlow = MutableStateFlow(ConnectionStatus.DISCONNECTED)
+            every { savedStateHandle.getStateFlow<Boolean>(any(), any()) } returns shouldFeedRunFlow
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+            every { webSocketRepository.rawMessages } returns MutableSharedFlow(
+                replay = 0,
+                extraBufferCapacity = 100,
+                onBufferOverflow = BufferOverflow.DROP_OLDEST
+            )
+
+            viewModel = FeedViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle,
+                context = context
+            )
+
+            viewModel.state.test {
+                skipItems(1)
+
+                connectionStatusFlow.value = ConnectionStatus.CONNECTING
+                advanceUntilIdle()
+                skipItems(1)
+
+                connectionStatusFlow.value = ConnectionStatus.DISCONNECTED
+                advanceUntilIdle()
+
+                var errorState = awaitItem()
+                while (errorState.error == null) {
+                    errorState = awaitItem()
+                }
+                assertTrue(errorState.error != null)
+
+                viewModel.handleIntent(FeedIntent.Retry)
+                advanceUntilIdle()
+
+                connectionStatusFlow.value = ConnectionStatus.CONNECTING
+                advanceUntilIdle()
+
+                var retryState = awaitItem()
+                while (retryState.error != null) {
+                    retryState = awaitItem()
+                }
+                assertNull(retryState.error)
+                verify { webSocketRepository.start() }
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `handleIntent ClearError clears error state`() = runTest(StandardTestDispatcher()) {
+        val rawMessagesFlow = MutableSharedFlow<String>(
+            replay = 1,
+            extraBufferCapacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        )
+        every { webSocketRepository.rawMessages } returns rawMessagesFlow
+
+        viewModel = FeedViewModel(
+            webSocketRepository = webSocketRepository,
+            symbolMapper = symbolMapper,
+            json = json,
+            logger = logger,
+            savedStateHandle = savedStateHandle,
+            context = context
+        )
+
+        viewModel.state.test {
+            skipItems(1)
+
+            rawMessagesFlow.emit("invalid json")
+            advanceUntilIdle()
+
+            val errorState = awaitItem()
+            assertTrue(errorState.error != null)
+
+            viewModel.handleIntent(FeedIntent.ClearError)
+            advanceUntilIdle()
+
+            val clearedState = awaitItem()
+            assertNull(clearedState.error)
         }
     }
 }
