@@ -1,4 +1,4 @@
-package com.milen.realtimepricetracker.ui.feature.feed.screen
+package com.milen.realtimepricetracker.ui.feature.details.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -7,35 +7,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.milen.realtimepricetracker.ui.feature.feed.FeedEvent
-import com.milen.realtimepricetracker.ui.feature.feed.FeedIntent
-import com.milen.realtimepricetracker.ui.feature.feed.FeedViewModel
-import com.milen.realtimepricetracker.ui.navigation.Screen
+import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsEvent
+import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-internal fun FeedScreen(
+internal fun SymbolDetailsScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: FeedViewModel = hiltViewModel<FeedViewModel>(),
+    viewModel: SymbolDetailsViewModel = hiltViewModel<SymbolDetailsViewModel>(),
 ) {
     val state by viewModel.state.collectAsState()
 
-    FeedContent(
+    SymbolDetailsContent(
         modifier = modifier,
         state = state,
         onIntent = viewModel::handleIntent
     )
 
     LaunchedEffect(Unit) {
-        viewModel.handleIntent(FeedIntent.StartFeed)
-    }
-
-    LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is FeedEvent.NavigateToSymbolDetails -> {
-                    navController.navigate(Screen.SymbolDetails.createRoute(event.symbol))
+                is SymbolDetailsEvent.NavigateBack -> {
+                    navController.popBackStack()
                 }
             }
         }
