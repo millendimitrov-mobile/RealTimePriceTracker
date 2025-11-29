@@ -1,6 +1,5 @@
 package com.milen.realtimepricetracker.ui.feature.feed.screen
 
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -50,7 +49,7 @@ internal fun StockRowItem(
     modifier: Modifier = Modifier,
     priceColoringOnChangeMillis: Long = 1000L,
 ) {
-    val context = LocalContext.current
+    LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
     val defaultPriceColor = colorScheme.onSurface
     var priceFlashColor by remember(stock.price) { mutableStateOf<Color?>(null) }
@@ -75,7 +74,8 @@ internal fun StockRowItem(
             }
 
             PriceChangeDirection.NO_CHANGE,
-            PriceChangeDirection.UNKNOWN -> {
+            PriceChangeDirection.UNKNOWN,
+                -> {
                 priceFlashColor = null
             }
         }
@@ -85,11 +85,6 @@ internal fun StockRowItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.stock_clicked, stock.id),
-                    Toast.LENGTH_SHORT
-                ).show()
                 onClick()
             }),
         colors = CardDefaults.cardColors(

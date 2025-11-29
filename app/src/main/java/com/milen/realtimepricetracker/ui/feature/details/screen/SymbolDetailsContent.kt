@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.milen.realtimepricetracker.R
+import com.milen.realtimepricetracker.formatPrice
+import com.milen.realtimepricetracker.toLocalizedNoTrailingZeros
 import com.milen.realtimepricetracker.ui.annotations.ThemePreviews
 import com.milen.realtimepricetracker.ui.components.AppScaffold
 import com.milen.realtimepricetracker.ui.components.PriceChangeIndicator
@@ -30,8 +32,6 @@ import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsIntent
 import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsState
 import com.milen.realtimepricetracker.ui.theme.RealTimePriceTrackerTheme
 import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 internal fun SymbolDetailsContent(
@@ -87,7 +87,7 @@ private fun SymbolDetailsTopBar(
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
                     contentDescription = stringResource(R.string.back)
                 )
             }
@@ -140,7 +140,8 @@ private fun SymbolDetailsBody(
 
             if (symbol.previousPrice != null) {
                 val priceChange = symbol.price - symbol.previousPrice
-                val priceChangePercent = (priceChange / symbol.previousPrice) * BigDecimal("100")
+                val priceChangePercent =
+                    (priceChange.toDouble() / symbol.previousPrice.toDouble()) * 100
                 val sign = if (priceChange >= BigDecimal.ZERO) "+" else ""
 
                 Column(
@@ -157,7 +158,7 @@ private fun SymbolDetailsBody(
                         }
                     )
                     Text(
-                        text = "$sign${String.format("%.2f", priceChangePercent)}%",
+                        text = "$sign${priceChangePercent.toLocalizedNoTrailingZeros()}%",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -173,11 +174,6 @@ private fun SymbolDetailsBody(
             modifier = Modifier.padding(top = 16.dp)
         )
     }
-}
-
-private fun formatPrice(price: BigDecimal): String {
-    val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-    return formatter.format(price)
 }
 
 @ThemePreviews
