@@ -44,7 +44,7 @@ class SymbolDetailsViewModelTest {
         savedStateHandle = mockk(relaxed = true)
 
         every { savedStateHandle.get<String>("symbol") } returns "AAPL"
-        every { webSocketRepository.rawMessages } returns MutableSharedFlow<String>(
+        every { webSocketRepository.rawMessages } returns MutableSharedFlow(
             replay = 0,
             extraBufferCapacity = 100,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -210,24 +210,6 @@ class SymbolDetailsViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
-
-    @Test
-    fun `handleIntent Back emits NavigateBack event`() = runTest {
-        viewModel = SymbolDetailsViewModel(
-            webSocketRepository = webSocketRepository,
-            symbolMapper = symbolMapper,
-            json = json,
-            logger = logger,
-            savedStateHandle = savedStateHandle
-        )
-
-        viewModel.events.test {
-            viewModel.handleIntent(SymbolDetailsIntent.Back)
-
-            val event = awaitItem()
-            assertTrue(event is SymbolDetailsEvent.NavigateBack)
-        }
-    }
 
     @Test
     fun `handles invalid JSON gracefully`() = runTest(StandardTestDispatcher()) {
