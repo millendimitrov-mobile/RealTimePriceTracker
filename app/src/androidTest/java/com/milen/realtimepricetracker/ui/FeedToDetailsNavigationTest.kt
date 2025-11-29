@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -35,10 +36,10 @@ class FeedToDetailsNavigationTest {
 
             waitUntilAtLeastOneExists(
                 matcher = hasText(COMPANY_NAME),
-                timeoutMillis = 10_000
+                timeoutMillis = MAX_WAIT_TYPE
             )
 
-            onNodeWithText(COMPANY_NAME)
+            onAllNodesWithText(COMPANY_NAME)[0]
                 .performScrollTo()
                 .assertIsDisplayed()
                 .performClick()
@@ -54,9 +55,9 @@ class FeedToDetailsNavigationTest {
 
             waitUntilAtLeastOneExists(
                 matcher = hasText(COMPANY_NAME),
-                timeoutMillis = 10_000
+                timeoutMillis = MAX_WAIT_TYPE
             )
-            
+
             onNodeWithText(
                 INITIAL_STOCKS.firstOrNull { it.name == COMPANY_NAME }?.description.orEmpty()
             ).assertIsDisplayed()
@@ -75,6 +76,7 @@ class FeedToDetailsNavigationTest {
     }
 
     companion object {
+        private const val MAX_WAIT_TYPE = 10_000L
         private const val COMPANY_NAME = "Broadcom"
     }
 }
