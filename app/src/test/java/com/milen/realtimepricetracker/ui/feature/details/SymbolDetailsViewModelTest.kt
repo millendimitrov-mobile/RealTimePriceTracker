@@ -5,6 +5,7 @@ import com.milen.realtimepricetracker.data.mapper.SymbolMapper
 import com.milen.realtimepricetracker.data.network.model.SymbolDto
 import com.milen.realtimepricetracker.data.websocket.WebSocketRepository
 import com.milen.realtimepricetracker.domain.logger.Logger
+import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.domain.model.StockSymbol
 import io.mockk.every
 import io.mockk.mockk
@@ -12,6 +13,7 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -47,6 +49,7 @@ class SymbolDetailsViewModelTest {
             extraBufferCapacity = 100,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
+        every { webSocketRepository.connectionStatus } returns MutableStateFlow(ConnectionStatus.DISCONNECTED)
     }
 
     @Test
@@ -267,5 +270,107 @@ class SymbolDetailsViewModelTest {
             savedStateHandle = savedStateHandle
         )
     }
-}
 
+    @Test
+    fun `starts repository when connection status is DISCONNECTED`() =
+        runTest(StandardTestDispatcher()) {
+            val connectionStatusFlow = MutableStateFlow(ConnectionStatus.DISCONNECTED)
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+
+            viewModel = SymbolDetailsViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle
+            )
+
+            advanceUntilIdle()
+
+            verify(timeout = 1000) { webSocketRepository.start() }
+            verify(timeout = 1000) {
+                logger.logEvent(
+                    "Repository not connected, starting it",
+                    any()
+                )
+            }
+        }
+
+    @Test
+    fun `starts repository when connection status is CONNECTING`() =
+        runTest(StandardTestDispatcher()) {
+            val connectionStatusFlow = MutableStateFlow(ConnectionStatus.CONNECTING)
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+
+            viewModel = SymbolDetailsViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle
+            )
+
+            advanceUntilIdle()
+
+            verify(timeout = 1000) { webSocketRepository.start() }
+            verify(timeout = 1000) {
+                logger.logEvent(
+                    "Repository not connected, starting it",
+                    any()
+                )
+            }
+        }
+
+    @Test
+    fun `does not start repository when connection status is CONNECTED`() =
+        runTest(StandardTestDispatcher()) {
+            val connectionStatusFlow = MutableStateFlow(ConnectionStatus.CONNECTED)
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+
+            viewModel = SymbolDetailsViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle
+            )
+
+            advanceUntilIdle()
+
+            verify(exactly = 0) { webSocketRepository.start() }
+            verify(exactly = 0) { logger.logEvent("Repository not connected, starting it", any()) }
+        }
+
+    @Test
+    fun `starts repository when connection status changes from CONNECTED to DISCONNECTED`() =
+        runTest(StandardTestDispatcher()) {
+            val connectionStatusFlow = MutableStateFlow(ConnectionStatus.CONNECTED)
+            every { webSocketRepository.connectionStatus } returns connectionStatusFlow
+
+            viewModel = SymbolDetailsViewModel(
+                webSocketRepository = webSocketRepository,
+                symbolMapper = symbolMapper,
+                json = json,
+                logger = logger,
+                savedStateHandle = savedStateHandle
+            )
+
+            advanceUntilIdle()
+
+            // Initially should not start since it's CONNECTED
+            verify(exactly = 0) { webSocketRepository.start() }
+
+            // Change to DISCONNECTED
+            connectionStatusFlow.value = ConnectionStatus.DISCONNECTED
+            advanceUntilIdle()
+
+            // Now should start
+            verify(timeout = 1000) { webSocketRepository.start() }
+            verify(timeout = 1000) {
+                logger.logEvent(
+                    "Repository not connected, starting it",
+                    any()
+                )
+            }
+        }
+}
