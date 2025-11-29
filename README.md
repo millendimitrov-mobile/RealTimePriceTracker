@@ -182,6 +182,36 @@ Run specific test class:
 ./gradlew :app:testDebugUnitTest --tests "com.milen.realtimepricetracker.ui.feature.feed.FeedViewModelTest"
 ```
 
+### UI Instrumentation Tests (Espresso)
+
+The project includes UI instrumentation tests using Jetpack Compose Testing and Espresso to verify user interactions and navigation flows.
+
+#### Running UI Tests
+
+Run all instrumentation tests:
+
+```bash
+./gradlew :app:connectedDebugAndroidTest
+```
+
+Run a specific test class:
+
+```bash
+./gradlew :app:connectedDebugAndroidTest --tests "com.milen.realtimepricetracker.ui.FeedToDetailsNavigationTest"
+```
+
+**Note**: UI instrumentation tests require a connected device or emulator. Make sure you have a device connected before running these tests.
+
+#### Test Scenarios
+
+The project includes the following UI test scenarios:
+
+- **Feed to Details Navigation Test** (`FeedToDetailsNavigationTest`):
+  - Verifies navigation from the feed screen to symbol details
+  - Tests scrolling to find a specific stock (Tesla)
+  - Validates that the details screen displays correct information
+  - Confirms navigation back to the feed screen
+
 ### UI Snapshot Testing with Roborazzi
 
 The project uses [Roborazzi](https://github.com/takahirom/roborazzi) for UI snapshot testing of
