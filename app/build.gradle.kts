@@ -1,3 +1,7 @@
+@file:OptIn(ExperimentalRoborazziApi::class)
+
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -49,6 +54,25 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperties["robolectric.pixelCopyRenderMode"] = "hardware"
+            }
+        }
+    }
+}
+
+roborazzi {
+    generateComposePreviewRobolectricTests {
+        outputDir.set(file("src/test/snapshottests"))
+        enable.set(true)
+        testerQualifiedClassName.set("com.milen.realtimepricetracker.ui.snapshot.RealTimeComposePreviewTester")
+        useScanOptionParametersInTester.set(true)
+        includePrivatePreviews = true
+        packages.set(listOf("com.milen.realtimepricetracker"))
+    }
 }
 
 dependencies {
@@ -76,9 +100,20 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.rule)
+    testImplementation(libs.roborazzi.previewscannersupport)
+    testImplementation(libs.composablepreviewscanner.core)
+    testImplementation(libs.composablepreviewscanner.android)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation("androidx.compose.ui:ui-test-junit4-android")
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
