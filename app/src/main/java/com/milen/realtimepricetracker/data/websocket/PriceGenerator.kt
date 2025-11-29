@@ -1,5 +1,6 @@
 package com.milen.realtimepricetracker.data.websocket
 
+import com.milen.realtimepricetracker.BuildConfig
 import com.milen.realtimepricetracker.data.network.model.SymbolDto
 import com.milen.realtimepricetracker.di.qualifiers.ApplicationScope
 import com.milen.realtimepricetracker.domain.logger.Logger
@@ -88,7 +89,7 @@ internal class PriceGenerator @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "PriceGenerator"
+        private const val TAG = "${BuildConfig.APPLICATION_ID}.PriceGenerator"
         private const val PRICE_UPDATE_INTERVAL_MS = 2_000L
         private const val PRICE_VARIATION_MIN = -0.05
         private const val PRICE_VARIATION_MAX = 0.05

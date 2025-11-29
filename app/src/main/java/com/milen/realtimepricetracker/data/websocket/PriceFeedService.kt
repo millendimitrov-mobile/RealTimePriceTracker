@@ -1,5 +1,6 @@
 package com.milen.realtimepricetracker.data.websocket
 
+import com.milen.realtimepricetracker.BuildConfig
 import com.milen.realtimepricetracker.data.config.WebSocketConfig
 import com.milen.realtimepricetracker.di.qualifiers.ApplicationScope
 import com.milen.realtimepricetracker.domain.logger.Logger
@@ -205,7 +206,7 @@ internal class PriceFeedService @Inject constructor(
     }
 
     companion object {
-        private const val TAG = "PriceFeedService"
+        private const val TAG = "${BuildConfig.APPLICATION_ID}.PriceFeedService"
     }
 }
 

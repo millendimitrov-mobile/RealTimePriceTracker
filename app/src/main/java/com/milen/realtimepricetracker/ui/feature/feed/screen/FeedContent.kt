@@ -3,7 +3,6 @@ package com.milen.realtimepricetracker.ui.feature.feed.screen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +34,7 @@ internal fun FeedContent(
             )
         }
     ) { paddingValues ->
-        if (state.rawMessages.isEmpty()) {
+        if (state.stocks.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -48,26 +47,19 @@ internal fun FeedContent(
                 )
             }
         } else {
-            // TODO REMOVE this is just for testing use LazyColumn with parsed Stocks instead
-            RawMessageItem(
-                message = state.rawMessages.firstOrNull().orEmpty(),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            // TODO: Replace with LazyColumn displaying StockRowItem components
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                Text(
+                    text = "Stocks:\n${state.stocks}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
-    }
-}
-
-@Composable
-private fun RawMessageItem(
-    message: String,
-    modifier: Modifier = Modifier,
-) {
-    Card(modifier = modifier) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }
 
@@ -93,11 +85,7 @@ private fun FeedContentPreviewConnected() {
             state = FeedState(
                 connectionStatus = ConnectionStatus.CONNECTED,
                 isFeedRunning = true,
-                rawMessages = listOf(
-                    "Sample message 1",
-                    "Sample message 2",
-                    "Sample message 3"
-                )
+                stocks = emptyList()
             ),
             onIntent = {}
         )
