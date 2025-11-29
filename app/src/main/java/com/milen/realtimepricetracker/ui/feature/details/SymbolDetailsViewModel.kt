@@ -32,7 +32,7 @@ internal class SymbolDetailsViewModel @Inject constructor(
     private val symbolId: String = savedStateHandle.get<String>(KEY_SYMBOL)
         ?: throw IllegalArgumentException("Symbol ID is required")
 
-    private val _events = Channel<SymbolDetailsEvent>(Channel.CONFLATED)
+    private val _events = Channel<SymbolDetailsEvent>(Channel.RENDEZVOUS)
     val events = _events.receiveAsFlow()
 
     private val currentSymbol = webSocketRepository.rawMessages
@@ -82,7 +82,7 @@ internal class SymbolDetailsViewModel @Inject constructor(
             }
         }
     }
-    
+
     companion object {
         private const val TAG = "${BuildConfig.APPLICATION_ID}.SymbolDetailsViewModel"
         private const val KEY_SYMBOL = "symbol"

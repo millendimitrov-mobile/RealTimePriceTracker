@@ -16,11 +16,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.json.Json
@@ -54,7 +54,7 @@ internal class FeedViewModel @Inject constructor(
         }
     }.launchIn(viewModelScope)
 
-    private val _events = Channel<FeedEvent>(Channel.CONFLATED)
+    private val _events = Channel<FeedEvent>(Channel.RENDEZVOUS)
     val events = _events.receiveAsFlow()
 
     private val isLoading = MutableStateFlow(false)
