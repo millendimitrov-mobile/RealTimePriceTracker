@@ -22,28 +22,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.milen.realtimepricetracker.R
+import com.milen.realtimepricetracker.domain.model.StockSymbol
 import com.milen.realtimepricetracker.formatPrice
 import com.milen.realtimepricetracker.toLocalizedNoTrailingZeros
 import com.milen.realtimepricetracker.ui.annotations.ThemePreviews
 import com.milen.realtimepricetracker.ui.components.AppScaffold
 import com.milen.realtimepricetracker.ui.components.PriceChangeIndicator
 import com.milen.realtimepricetracker.ui.components.ShowLoading
-import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsIntent
 import com.milen.realtimepricetracker.ui.feature.details.SymbolDetailsState
+import com.milen.realtimepricetracker.ui.feature.feed.stockList
 import com.milen.realtimepricetracker.ui.theme.RealTimePriceTrackerTheme
 import java.math.BigDecimal
 
 @Composable
 internal fun SymbolDetailsContent(
     state: SymbolDetailsState,
-    onIntent: (SymbolDetailsIntent) -> Unit,
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit,
 ) {
     AppScaffold(
         modifier = modifier,
         topBar = {
             SymbolDetailsTopBar(
-                onBackClick = { onIntent(SymbolDetailsIntent.Back) }
+                onBackClick = onBackClick
             )
         }
     ) { paddingValues ->
@@ -182,16 +183,10 @@ private fun SymbolDetailsContentPreview() {
     RealTimePriceTrackerTheme {
         SymbolDetailsContent(
             state = SymbolDetailsState(
-                symbol = com.milen.realtimepricetracker.domain.model.StockSymbol(
-                    id = "AAPL",
-                    name = "Apple",
-                    description = "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide.",
-                    price = BigDecimal("175.50"),
-                    previousPrice = BigDecimal("170.00")
-                ),
+                symbol = stockList[0],
                 isLoading = false
             ),
-            onIntent = {}
+            onBackClick = {}
         )
     }
 }

@@ -12,13 +12,11 @@ import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.domain.model.StockSymbol
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.json.Json
@@ -35,9 +33,6 @@ internal class SymbolDetailsViewModel @Inject constructor(
 
     private val symbolId: String = savedStateHandle.get<String>(KEY_SYMBOL)
         ?: throw IllegalArgumentException("Symbol ID is required")
-
-    private val _events = Channel<SymbolDetailsEvent>(Channel.RENDEZVOUS)
-    val events = _events.receiveAsFlow()
 
     private val ensureRepositoryRunningJob: Job = webSocketRepository.connectionStatus
         .onEach { status ->
@@ -91,14 +86,6 @@ internal class SymbolDetailsViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         ensureRepositoryRunningJob.cancel()
-    }
-
-    fun handleIntent(intent: SymbolDetailsIntent) {
-        when (intent) {
-            is SymbolDetailsIntent.Back -> {
-                _events.trySend(SymbolDetailsEvent.NavigateBack)
-            }
-        }
     }
 
     companion object {
