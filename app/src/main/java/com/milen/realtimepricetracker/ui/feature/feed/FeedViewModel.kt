@@ -12,9 +12,11 @@ import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import com.milen.realtimepricetracker.domain.model.StockSymbol
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -51,6 +53,9 @@ internal class FeedViewModel @Inject constructor(
             }
         }
     }.launchIn(viewModelScope)
+
+    private val _events = Channel<FeedEvent>(Channel.CONFLATED)
+    val events = _events.receiveAsFlow()
 
     private val isLoading = MutableStateFlow(false)
 
@@ -104,7 +109,9 @@ internal class FeedViewModel @Inject constructor(
             is FeedIntent.StartFeed -> startFeed()
             is FeedIntent.StopFeed -> stopFeed()
             is FeedIntent.ToggleFeed -> toggleFeed()
-            is FeedIntent.SymbolClicked -> Unit
+            is FeedIntent.SymbolClicked -> {
+                _events.trySend(FeedEvent.NavigateToSymbolDetails(intent.symbol))
+            }
         }
     }
 
