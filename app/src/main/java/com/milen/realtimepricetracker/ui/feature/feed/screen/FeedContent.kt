@@ -3,8 +3,6 @@ package com.milen.realtimepricetracker.ui.feature.feed.screen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,21 +48,11 @@ internal fun FeedContent(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                items(
-                    items = state.rawMessages,
-                    key = { index -> index }
-                ) { message ->
-                    RawMessageItem(
-                        message = message,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
-            }
+            // TODO REMOVE this is just for testing use LazyColumn with parsed Stocks instead
+            RawMessageItem(
+                message = state.rawMessages.firstOrNull().orEmpty(),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
     }
 }
