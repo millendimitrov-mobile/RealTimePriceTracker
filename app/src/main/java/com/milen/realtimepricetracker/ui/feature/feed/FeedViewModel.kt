@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.milen.realtimepricetracker.data.websocket.WebSocketRepository
 import com.milen.realtimepricetracker.domain.logger.Logger
+import com.milen.realtimepricetracker.domain.model.ConnectionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,8 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,12 +20,13 @@ internal class FeedViewModel @Inject constructor(
     private val logger: Logger,
 ) : ViewModel() {
 
-    private val isFeedRunning = MutableStateFlow(false)
     private val isLoading = MutableStateFlow(false)
 
     private val rawMessages = webSocketRepository.rawMessages
         .runningFold(emptyList<String>()) { acc, message ->
-            (acc + message).takeLast(50)
+            logger.logEvent("acc: $acc")
+            logger.logEvent("message: $message")
+            listOf(message) // TODO MAP IT TO STOCKS
         }
         .stateIn(
             scope = viewModelScope,
@@ -36,13 +36,12 @@ internal class FeedViewModel @Inject constructor(
 
     val state: StateFlow<FeedState> = combine(
         webSocketRepository.connectionStatus,
-        isFeedRunning,
         isLoading,
         rawMessages
-    ) { status, running, loading, messages ->
+    ) { status, loading, messages ->
         FeedState(
             connectionStatus = status,
-            isFeedRunning = running,
+            isFeedRunning = status == ConnectionStatus.CONNECTED,
             isLoading = loading,
             rawMessages = messages
         )
@@ -57,35 +56,24 @@ internal class FeedViewModel @Inject constructor(
             is FeedIntent.StartFeed -> startFeed()
             is FeedIntent.StopFeed -> stopFeed()
             is FeedIntent.ToggleFeed -> toggleFeed()
-            is FeedIntent.SymbolClicked -> Unit // TODO Handle symbol click
+            is FeedIntent.SymbolClicked -> Unit
         }
     }
 
     private fun startFeed() {
-        isFeedRunning.update { true }
-        viewModelScope.launch {
-            try {
-                webSocketRepository.connect()
-            } catch (e: Exception) {
-                logger.logError("Failed to start feed: ${e.message}", e)
-                isFeedRunning.update { false }
-            }
-        }
+        webSocketRepository.start()
     }
 
     private fun stopFeed() {
-        isFeedRunning.update { false }
-        viewModelScope.launch {
-            webSocketRepository.disconnect()
-        }
+        webSocketRepository.stop()
     }
 
     private fun toggleFeed() {
-        if (isFeedRunning.value) {
+        val currentStatus = webSocketRepository.connectionStatus.value
+        if (currentStatus == ConnectionStatus.CONNECTED) {
             stopFeed()
         } else {
             startFeed()
         }
     }
 }
-
