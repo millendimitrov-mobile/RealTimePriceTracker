@@ -1,25 +1,31 @@
 # Real-Time Price Tracker
 
-A modern Android application for tracking real-time stock prices using WebSocket connections. Built with Jetpack Compose, following MVI (Model-View-Intent) architecture pattern.
+A modern Android application for tracking real-time stock prices using WebSocket connections. Built
+with Jetpack Compose, following MVI (Model-View-Intent) architecture pattern.
 
 ## 📱 Features
 
-- **Real-Time Price Updates**: Live stock price updates via WebSocket connection (updates every 2 seconds)
+- **Real-Time Price Updates**: Live stock price updates via WebSocket connection (updates every 2
+  seconds)
 - **Stock Feed Screen**: Displays 25 stock symbols sorted by price (highest first)
 - **Symbol Details Screen**: Detailed view for individual stock symbols with price change indicators
 - **Price Change Indicators**: Visual indicators (↑/↓) showing price increases/decreases
-- **Price Flash Animations**: Color-coded animations (green for increases, red for decreases) when prices change
-- **Connection Status**: Real-time connection status indicator (🟢 Connected / 🔴 Disconnected / 🟡 Connecting)
+- **Price Flash Animations**: Color-coded animations (green for increases, red for decreases) when
+  prices change
+- **Connection Status**: Real-time connection status indicator (🟢 Connected / 🔴 Disconnected / 🟡
+  Connecting)
 - **Error Handling**: User-friendly error messages with retry functionality
 - **Deep Linking**: Support for deep links to open specific symbol details
 - **State Persistence**: Feed state persists across process death using SavedStateHandle
-- **Auto-Start Repository**: Automatically starts WebSocket connection when details screen is opened via deep link
+- **Auto-Start Repository**: Automatically starts WebSocket connection when details screen is opened
+  via deep link
 
 ## 🏗️ Architecture
 
 The app follows **MVI (Model-View-Intent)** architecture pattern:
 
-- **Model**: Domain models (`StockSymbol`, `ConnectionStatus`) and UI state (`FeedState`, `SymbolDetailsState`)
+- **Model**: Domain models (`StockSymbol`, `ConnectionStatus`) and UI state (`FeedState`,
+  `SymbolDetailsState`)
 - **View**: Jetpack Compose screens (`FeedScreen`, `SymbolDetailsScreen`)
 - **Intent**: User actions (`FeedIntent`, `SymbolDetailsIntent`)
 - **ViewModel**: Business logic and state management (`FeedViewModel`, `SymbolDetailsViewModel`)
@@ -60,9 +66,9 @@ The app follows **MVI (Model-View-Intent)** architecture pattern:
 - **State Management**: StateFlow, SharedFlow, Channel
 - **Navigation**: Navigation Compose
 - **Serialization**: Kotlinx Serialization (JSON)
-- **Testing**: 
-  - Unit Tests: MockK, Turbine, JUnit 4
-  - UI Snapshot Tests: Roborazzi
+- **Testing**:
+    - Unit Tests: MockK, Turbine, JUnit 4
+    - UI Snapshot Tests: Roborazzi
 - **Build System**: Gradle with Version Catalog
 
 ## 📦 Dependencies
@@ -88,8 +94,9 @@ Key dependencies (see `gradle/libs.versions.toml` for full list):
 ### Setup
 
 1. Clone the repository:
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/millendimitrov-mobile/RealTimePriceTracker.git
 cd RealTimePriceTracker
 ```
 
@@ -117,6 +124,7 @@ stocks://symbol/{symbol}
 ### Examples
 
 **Open Apple (AAPL) details:**
+
 ```bash
 adb shell am start \
   -a android.intent.action.VIEW \
@@ -125,6 +133,7 @@ adb shell am start \
 ```
 
 **Open Google (GOOG) details:**
+
 ```bash
 adb shell am start \
   -a android.intent.action.VIEW \
@@ -133,6 +142,7 @@ adb shell am start \
 ```
 
 **Open Microsoft (MSFT) details:**
+
 ```bash
 adb shell am start \
   -a android.intent.action.VIEW \
@@ -143,6 +153,7 @@ adb shell am start \
 ### Supported Symbols
 
 The app tracks 25 stock symbols including:
+
 - AAPL (Apple)
 - GOOG (Google)
 - MSFT (Microsoft)
@@ -152,25 +163,29 @@ The app tracks 25 stock symbols including:
 - META (Meta Platforms)
 - And 18 more...
 
-See `app/src/main/java/com/milen/realtimepricetracker/data/websocket/StockData.kt` for the complete list.
+See `app/src/main/java/com/milen/realtimepricetracker/data/websocket/StockData.kt` for the complete
+list.
 
 ## 🧪 Testing
 
 ### Unit Tests
 
 Run all unit tests:
+
 ```bash
 ./gradlew :app:testDebugUnitTest
 ```
 
 Run specific test class:
+
 ```bash
 ./gradlew :app:testDebugUnitTest --tests "com.milen.realtimepricetracker.ui.feature.feed.FeedViewModelTest"
 ```
 
 ### UI Snapshot Testing with Roborazzi
 
-The project uses [Roborazzi](https://github.com/takahirom/roborazzi) for UI snapshot testing of Compose previews.
+The project uses [Roborazzi](https://github.com/takahirom/roborazzi) for UI snapshot testing of
+Compose previews.
 
 #### Recording Base Images
 
@@ -181,12 +196,14 @@ To record base snapshot images from Compose previews:
 ```
 
 This command will:
+
 - Scan all `@Preview` composables (including private ones)
 - Generate snapshot images in `app/src/test/snapshottests/`
 - Use the custom tester: `RealTimeComposePreviewTester`
 - Include private previews automatically
 
-**When to run**: 
+**When to run**:
+
 - Initially to create baseline snapshots
 - After making intentional UI changes
 - When adding new preview composables
@@ -200,12 +217,14 @@ To compare current UI state against recorded base images:
 ```
 
 This command will:
+
 - Generate new snapshots from current previews
 - Compare them against the base images in `app/src/test/snapshottests/`
 - Report any visual differences
 - Fail the build if differences are detected
 
 **When to run**:
+
 - Before committing code changes
 - In CI/CD pipelines to catch visual regressions
 - When refactoring UI components
@@ -245,6 +264,7 @@ roborazzi {
 ```
 
 **Note**: When UI changes are intentional, you should:
+
 1. Run `recordRoborazziDebug` to update the base images
 2. Commit the updated snapshot images to version control
 
@@ -307,12 +327,14 @@ app/src/main/java/com/milen/realtimepricetracker/
 ## 🎨 UI Components
 
 ### Feed Screen
+
 - **FeedTopBar**: Connection status indicator and start/stop toggle
 - **StockRowItem**: Individual stock row with price, change indicator, and flash animation
 - **ShowError**: Error display with retry and close buttons
 - **ShowLoading**: Loading indicator
 
 ### Details Screen
+
 - **SymbolDetailsTopBar**: Back navigation
 - **SymbolDetailsBody**: Symbol name, price, change indicator, and description
 - **PriceChangeIndicator**: Visual indicator for price direction
@@ -388,6 +410,7 @@ SOFTWARE.
 ## 🙏 Acknowledgments
 
 - Built with [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- WebSocket testing with [Postman Echo](https://www.postman.com/postman/workspace/pstmn-echo-service/)
+- WebSocket testing
+  with [Postman Echo](https://www.postman.com/postman/workspace/pstmn-echo-service/)
 - UI snapshot testing with [Roborazzi](https://github.com/takahirom/roborazzi)
 
