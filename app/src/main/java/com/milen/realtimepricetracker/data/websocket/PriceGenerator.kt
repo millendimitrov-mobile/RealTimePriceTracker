@@ -78,13 +78,29 @@ internal class PriceGenerator @Inject constructor(
     private fun updatePrices() {
         currentStocks = currentStocks.map { stock ->
             val basePrice = stock.price
-            val randomVariation =
-                BigDecimal(Random.nextDouble(PRICE_VARIATION_MIN, PRICE_VARIATION_MAX))
-            val newPrice = basePrice.multiply(BigDecimal.ONE.add(randomVariation))
-                .setScale(2, RoundingMode.HALF_UP)
-                .coerceAtLeast(MIN_PRICE)
+            val randomVariation = generatePriceVariation()
+            val newPrice = if (randomVariation == BigDecimal.ZERO) {
+                basePrice
+            } else {
+                basePrice.multiply(BigDecimal.ONE.add(randomVariation))
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .coerceAtLeast(MIN_PRICE)
+            }
 
             stock.copy(price = newPrice)
+        }
+    }
+
+    private fun generatePriceVariation(): BigDecimal {
+        val randomValue = Random.nextDouble(0.0, 1.0)
+        return when {
+            randomValue < PROBABILITY_NO_CHANGE -> BigDecimal.ZERO
+            randomValue < PROBABILITY_NO_CHANGE + PROBABILITY_INCREASE -> {
+                BigDecimal(Random.nextDouble(0.0, PRICE_VARIATION_MAX))
+            }
+            else -> {
+                BigDecimal(Random.nextDouble(PRICE_VARIATION_MIN, 0.0))
+            }
         }
     }
 
@@ -93,6 +109,8 @@ internal class PriceGenerator @Inject constructor(
         private const val PRICE_UPDATE_INTERVAL_MS = 2_000L
         private const val PRICE_VARIATION_MIN = -0.05
         private const val PRICE_VARIATION_MAX = 0.05
+        private const val PROBABILITY_NO_CHANGE = 0.34
+        private const val PROBABILITY_INCREASE = 0.33
         private val MIN_PRICE = BigDecimal("0.01")
     }
 
