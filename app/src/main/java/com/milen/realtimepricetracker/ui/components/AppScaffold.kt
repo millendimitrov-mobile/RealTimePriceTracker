@@ -27,18 +27,20 @@ internal fun AppScaffold(
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
         val layoutDirection = LocalLayoutDirection.current
-        val safeDrawingPadding = WindowInsets.safeDrawing
+        val safeDrawingHorizontal = WindowInsets.safeDrawing
             .only(WindowInsetsSides.Horizontal)
             .asPaddingValues()
+        val safeDrawingAll = WindowInsets.safeDrawing.asPaddingValues()
 
         content(
             PaddingValues(
                 start = innerPadding.calculateStartPadding(layoutDirection) +
-                        safeDrawingPadding.calculateStartPadding(layoutDirection),
+                        safeDrawingHorizontal.calculateStartPadding(layoutDirection),
                 top = innerPadding.calculateTopPadding(),
                 end = innerPadding.calculateEndPadding(layoutDirection) +
-                        safeDrawingPadding.calculateEndPadding(layoutDirection),
-                bottom = innerPadding.calculateBottomPadding()
+                        safeDrawingHorizontal.calculateEndPadding(layoutDirection),
+                bottom = innerPadding.calculateBottomPadding() +
+                        safeDrawingAll.calculateBottomPadding()
             )
         )
     }

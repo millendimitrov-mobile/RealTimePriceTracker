@@ -19,16 +19,19 @@ private val DarkColorScheme = darkColorScheme(
 
     secondary = GreenAccentDark,
     onSecondary = Color.White,
+
     secondaryContainer = GreenAccent,
     onSecondaryContainer = Color.White,
 
-    tertiary = TealTertiary,
+    tertiary = TealTertiaryDark,
     onTertiary = Color.White,
+
     tertiaryContainer = TealTertiaryLight,
     onTertiaryContainer = Color.White,
 
     background = LogoSurfaceDark,
     onBackground = Color.White,
+
     surface = LogoSurfaceDark,
     onSurface = Color.White
 )
@@ -38,30 +41,30 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = Color.White,
 
     primaryContainer = BluePrimaryLight,
-    onPrimaryContainer = Color(0xFF002747),
+    onPrimaryContainer = BluePrimaryOnContainer,
 
     secondary = GreenAccent,
     onSecondary = Color.White,
 
     secondaryContainer = GreenAccentLight,
-    onSecondaryContainer = Color(0xFF003827),
+    onSecondaryContainer = GreenAccentOnContainer,
 
     tertiary = TealTertiary,
     onTertiary = Color.White,
 
     tertiaryContainer = TealTertiaryLight,
-    onTertiaryContainer = Color(0xFF002022),
+    onTertiaryContainer = TealTertiaryOnContainer,
 
     background = LogoSurfaceLight,
-    onBackground = Color(0xFF001322),
+    onBackground = OnBackground,
     surface = Color.White,
-    onSurface = Color(0xFF001322)
+    onSurface = OnBackground
 )
 
 @Composable
 fun RealTimePriceTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
